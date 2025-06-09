@@ -6,6 +6,10 @@ SERVERS=(
     "192.168.198.132"  # bm1
 )
 
+# SSH 접속 정보
+SSH_USER="ahn"
+SSH_PASS="ahn"
+
 # 에이전트 버전
 AGENT_VERSION="1.0.0"
 
@@ -23,8 +27,8 @@ deploy_agent() {
     local server=$1
     log "Deploying agent to $server"
     
-    # SSH로 서버에 접속하여 에이전트 설치
-    ssh root@$server << 'EOF'
+    # sshpass를 사용하여 SSH로 서버에 접속하여 에이전트 설치
+    sshpass -p "$SSH_PASS" ssh -o StrictHostKeyChecking=no $SSH_USER@$server << 'EOF'
         # 로그 디렉토리 생성
         mkdir -p /var/log/osmanaged
         
