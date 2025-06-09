@@ -17,6 +17,19 @@
             padding: 1rem;
             font-family: monospace;
         }
+        .server-status {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 5px;
+        }
+        .status-active {
+            background-color: #28a745;
+        }
+        .status-inactive {
+            background-color: #dc3545;
+        }
     </style>
 </head>
 <body>
@@ -48,9 +61,11 @@
                     <div class="card-header">
                         <div class="d-flex justify-content-between align-items-center">
                             <h5 class="card-title mb-0">로그 뷰어</h5>
-                            <div>
+                            <div class="d-flex gap-2">
                                 <input type="date" class="form-control" id="logDate">
                                 <button class="btn btn-primary" onclick="loadLogs()">조회</button>
+                                <button class="btn btn-success" onclick="downloadLog()">다운로드</button>
+                                <button class="btn btn-info" onclick="showCompareModal()">비교</button>
                             </div>
                         </div>
                     </div>
@@ -64,39 +79,146 @@
         </div>
     </div>
 
+    <!-- 로그 비교 모달 -->
+    <div class="modal fade" id="compareModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">로그 비교</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row mb-3">
+                        <div class="col">
+                            <select class="form-select" id="server1">
+                                <!-- 서버 목록이 여기에 추가됩니다 -->
+                            </select>
+                        </div>
+                        <div class="col">
+                            <select class="form-select" id="server2">
+                                <!-- 서버 목록이 여기에 추가됩니다 -->
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col">
+                            <h6>서버 1</h6>
+                            <div class="log-viewer" id="compareViewer1"></div>
+                        </div>
+                        <div class="col">
+                            <h6>서버 2</h6>
+                            <div class="log-viewer" id="compareViewer2"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">닫기</button>
+                    <button type="button" class="btn btn-primary" onclick="compareLogs()">비교</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+        let currentServer = null;
+        const compareModal = new bootstrap.Modal(document.getElementById('compareModal'));
+
         // 서버 목록 로드
         function loadServers() {
             fetch('/servers')
                 .then(response => response.json())
                 .then(servers => {
                     const serverList = document.getElementById('serverList');
+                    const server1Select = document.getElementById('server1');
+                    const server2Select = document.getElementById('server2');
+                    
                     serverList.innerHTML = '';
+                    server1Select.innerHTML = '';
+                    server2Select.innerHTML = '';
+                    
                     servers.forEach(server => {
+                        // 서버 목록에 추가
                         const item = document.createElement('a');
                         item.href = '#';
                         item.className = 'list-group-item list-group-item-action';
-                        item.textContent = `${server.name} (${server.type})`;
+                        item.innerHTML = `
+                            <span class="server-status status-${server.status}"></span>
+                            ${server.name} (${server.type})
+                        `;
                         item.onclick = () => selectServer(server.name);
                         serverList.appendChild(item);
+                        
+                        // 비교 모달의 선택 상자에 추가
+                        const option1 = document.createElement('option');
+                        option1.value = server.name;
+                        option1.textContent = `${server.name} (${server.type})`;
+                        server1Select.appendChild(option1);
+                        
+                        const option2 = document.createElement('option');
+                        option2.value = server.name;
+                        option2.textContent = `${server.name} (${server.type})`;
+                        server2Select.appendChild(option2);
                     });
                 });
         }
 
         // 서버 선택
         function selectServer(serverName) {
-            loadLogs(serverName);
+            currentServer = serverName;
+            loadLogs();
         }
 
         // 로그 로드
-        function loadLogs(serverName) {
+        function loadLogs() {
+            if (!currentServer) return;
+            
             const date = document.getElementById('logDate').value;
-            fetch(`/logs/${serverName}?date=${date}`)
+            fetch(`/logs/${currentServer}?date=${date}`)
                 .then(response => response.json())
                 .then(data => {
                     const logViewer = document.getElementById('logViewer');
                     logViewer.innerHTML = data.logs.join('<br>');
+                });
+        }
+
+        // 로그 다운로드
+        function downloadLog() {
+            if (!currentServer) return;
+            
+            const date = document.getElementById('logDate').value;
+            window.location.href = `/download/${currentServer}?date=${date}`;
+        }
+
+        // 비교 모달 표시
+        function showCompareModal() {
+            compareModal.show();
+        }
+
+        // 로그 비교
+        function compareLogs() {
+            const server1 = document.getElementById('server1').value;
+            const server2 = document.getElementById('server2').value;
+            const date = document.getElementById('logDate').value;
+            
+            if (server1 === server2) {
+                alert('서로 다른 서버를 선택해주세요.');
+                return;
+            }
+            
+            fetch(`/compare?server1=${server1}&server2=${server2}&date=${date}`)
+                .then(response => response.json())
+                .then(data => {
+                    const viewer1 = document.getElementById('compareViewer1');
+                    const viewer2 = document.getElementById('compareViewer2');
+                    
+                    if (data.error) {
+                        alert(data.error);
+                        return;
+                    }
+                    
+                    viewer1.innerHTML = data.diff.map(d => d.server1).join('<br>');
+                    viewer2.innerHTML = data.diff.map(d => d.server2).join('<br>');
                 });
         }
 
