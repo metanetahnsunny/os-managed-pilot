@@ -29,13 +29,13 @@ deploy_agent() {
 
     # collector.sh 최신 파일을 서버로 복사
     sshpass -p "$SSH_PASS" scp -o StrictHostKeyChecking=no ../collector/collector.sh $SSH_USER@$server:/tmp/collector.sh
-    sshpass -p "$SSH_PASS" ssh -o StrictHostKeyChecking=no $SSH_USER@$server "sudo mv /tmp/collector.sh /usr/local/bin/collector.sh && sudo chmod +x /usr/local/bin/collector.sh"
+    sshpass -p "$SSH_PASS" ssh -o StrictHostKeyChecking=no $SSH_USER@$server "echo '$SSH_PASS' | sudo -S mv /tmp/collector.sh /usr/local/bin/collector.sh && echo '$SSH_PASS' | sudo -S chmod +x /usr/local/bin/collector.sh"
 
     # crontab에 collector.sh 등록 (매일 자정)
     sshpass -p "$SSH_PASS" ssh -o StrictHostKeyChecking=no $SSH_USER@$server "(crontab -l 2>/dev/null; echo '0 0 * * * /usr/local/bin/collector.sh') | sort | uniq | crontab -"
 
     # 버전 정보 저장
-    sshpass -p "$SSH_PASS" ssh -o StrictHostKeyChecking=no $SSH_USER@$server "echo '$AGENT_VERSION' | sudo tee /var/log/osmanaged/agent_version > /dev/null"
+    sshpass -p "$SSH_PASS" ssh -o StrictHostKeyChecking=no $SSH_USER@$server "echo '$SSH_PASS' | sudo -S tee /var/log/osmanaged/agent_version > /dev/null"
 }
 
 # 메인 실행
