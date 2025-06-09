@@ -234,8 +234,8 @@
 
         // 로그 하이라이트 함수
         function highlightLog(log) {
-            // 타임스탬프 뒤에 오는 항목 제목까지 하이라이트
-            return log.replace(/(\[.*?\]\s*)?(==== \d+\. [^=]+ ====)/g, function(match, ts, section) {
+            // "==== 1. ... ====", "=== ... ===" 등 다양한 패턴 하이라이트
+            return log.replace(/(\[.*?\]\s*)?(=+\s*[\d\. ]*[^=]+?=+)/g, function(match, ts, section) {
                 if (section) {
                     return (ts ? ts : '') + '<span class="log-section">' + section + '</span>';
                 }
