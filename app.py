@@ -49,7 +49,7 @@ def get_logs(server_name):
     date = request.args.get('date', datetime.now().strftime('%Y-%m-%d'))
     year, month = date.split('-')[:2]
     log_dir = os.path.join(LOG_DIR, year, month)
-    pattern = os.path.join(log_dir, f"{server_name}*_{date}.log")
+    pattern = os.path.join(log_dir, f"*{server_name}*_{date}.log")
     log_files = glob.glob(pattern)
     try:
         if log_files:
@@ -69,7 +69,7 @@ def download_log(server_name):
     date = request.args.get('date', datetime.now().strftime('%Y-%m-%d'))
     year, month = date.split('-')[:2]
     log_dir = os.path.join(LOG_DIR, year, month)
-    pattern = os.path.join(log_dir, f"{server_name}*_{date}.log")
+    pattern = os.path.join(log_dir, f"*{server_name}*_{date}.log")
     log_files = glob.glob(pattern)
     if log_files:
         return send_file(log_files[0], as_attachment=True, 
@@ -91,8 +91,8 @@ def compare_logs():
     
     year, month = date.split('-')[:2]
     log_dir = os.path.join(LOG_DIR, year, month)
-    pattern1 = os.path.join(log_dir, f"{server1}*_{date}.log")
-    pattern2 = os.path.join(log_dir, f"{server2}*_{date}.log")
+    pattern1 = os.path.join(log_dir, f"*{server1}*_{date}.log")
+    pattern2 = os.path.join(log_dir, f"*{server2}*_{date}.log")
     log_files1 = glob.glob(pattern1)
     log_files2 = glob.glob(pattern2)
     try:
