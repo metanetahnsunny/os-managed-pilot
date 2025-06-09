@@ -80,28 +80,28 @@ deploy_agent() {
         collect_resource_usage() {
             log "=== Resource Usage ==="
             log "Memory Usage:"
-            free -h >> \$LOG_FILE
+            free -h 2>&1 | while read line; do log "\$line"; done
             log "Disk Usage:"
-            df -h >> \$LOG_FILE
+            df -h 2>&1 | while read line; do log "\$line"; done
         }
         
         # 5. Firewall 상태
         collect_firewall_status() {
             log "=== Firewall Status ==="
             if command -v ufw &> /dev/null; then
-                ufw status >> \$LOG_FILE
+                ufw status 2>&1 | while read line; do log "\$line"; done
             elif command -v firewall-cmd &> /dev/null; then
-                firewall-cmd --list-all >> \$LOG_FILE
+                firewall-cmd --list-all 2>&1 | while read line; do log "\$line"; done
             fi
-            iptables -L >> \$LOG_FILE
+            iptables -L 2>&1 | while read line; do log "\$line"; done
         }
         
         # 6. Proxy 설정
         collect_proxy_settings() {
             log "=== Proxy Settings ==="
-            env | grep -i proxy >> \$LOG_FILE
+            env | grep -i proxy 2>&1 | while read line; do log "\$line"; done
             if [ -f /etc/environment ]; then
-                grep -i proxy /etc/environment >> \$LOG_FILE
+                grep -i proxy /etc/environment 2>&1 | while read line; do log "\$line"; done
             fi
         }
         
@@ -109,7 +109,7 @@ deploy_agent() {
         collect_crontab() {
             log "=== Crontab Settings ==="
             for user in \$(cut -f1 -d: /etc/passwd); do
-                crontab -u \$user -l 2>/dev/null >> \$LOG_FILE
+                crontab -u \$user -l 2>/dev/null | while read line; do log "\$line"; done
             done
         }
         
@@ -117,10 +117,10 @@ deploy_agent() {
         collect_ntp() {
             log "=== NTP Settings ==="
             if command -v timedatectl &> /dev/null; then
-                timedatectl status >> \$LOG_FILE
+                timedatectl status 2>&1 | while read line; do log "\$line"; done
             fi
             if [ -f /etc/ntp.conf ]; then
-                grep -v '^#' /etc/ntp.conf >> \$LOG_FILE
+                grep -v '^#' /etc/ntp.conf 2>&1 | while read line; do log "\$line"; done
             fi
         }
         
@@ -128,9 +128,9 @@ deploy_agent() {
         collect_package_updates() {
             log "=== Recent Package Updates ==="
             if command -v apt &> /dev/null; then
-                grep -i "upgrade" /var/log/apt/history.log | tail -n 20 >> \$LOG_FILE
+                grep -i "upgrade" /var/log/apt/history.log 2>&1 | tail -n 20 | while read line; do log "\$line"; done
             elif command -v yum &> /dev/null; then
-                yum history | head -n 20 >> \$LOG_FILE
+                yum history 2>&1 | head -n 20 | while read line; do log "\$line"; done
             fi
         }
         
@@ -138,9 +138,9 @@ deploy_agent() {
         collect_installed_packages() {
             log "=== Installed Packages ==="
             if command -v dpkg &> /dev/null; then
-                dpkg -l >> \$LOG_FILE
+                dpkg -l 2>&1 | while read line; do log "\$line"; done
             elif command -v rpm &> /dev/null; then
-                rpm -qa >> \$LOG_FILE
+                rpm -qa 2>&1 | while read line; do log "\$line"; done
             fi
         }
         
@@ -148,25 +148,29 @@ deploy_agent() {
         collect_access_logs() {
             log "=== Yesterday's Access Logs ==="
             yesterday=\$(date -d "yesterday" +%Y-%m-%d)
-            grep "\$yesterday" /var/log/auth.log >> \$LOG_FILE
+            grep "\$yesterday" /var/log/auth.log 2>&1 | while read line; do log "\$line"; done
         }
         
         # 12. 프로세스 상태
         collect_process_status() {
             log "=== Process Status ==="
-            ps aux >> \$LOG_FILE
+            ps aux 2>&1 | while read line; do log "\$line"; done
         }
         
         # 13. 서비스 포트 상태
         collect_port_status() {
             log "=== Port Status ==="
-            netstat -tuln >> \$LOG_FILE
+            if command -v netstat &> /dev/null; then
+                netstat -tuln 2>&1 | while read line; do log "\$line"; done
+            elif command -v ss &> /dev/null; then
+                ss -tuln 2>&1 | while read line; do log "\$line"; done
+            fi
         }
         
         # 14. System Log
         collect_system_logs() {
             log "=== System Logs ==="
-            grep -i "error\|fail\|warn\|fault" /var/log/syslog >> \$LOG_FILE
+            grep -i "error\|fail\|warn\|fault" /var/log/syslog 2>&1 | while read line; do log "\$line"; done
         }
         
         # 메인 실행
