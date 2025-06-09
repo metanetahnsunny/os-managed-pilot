@@ -13,7 +13,7 @@ SERVERS = {
 }
 
 # 로그 디렉토리 설정
-LOG_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "logs")
+LOG_DIR = "/var/log/osmanaged"
 
 # 로그 디렉토리가 없으면 생성
 os.makedirs(LOG_DIR, exist_ok=True)
