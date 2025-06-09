@@ -48,12 +48,12 @@ def get_logs(server_name):
         
     date = request.args.get('date', datetime.now().strftime('%Y-%m-%d'))
     year, month = date.split('-')[:2]
-    
-    log_file = os.path.join(LOG_DIR, year, month, f"{server_name}_{date}.log")
-    
+    log_dir = os.path.join(LOG_DIR, year, month)
+    pattern = os.path.join(log_dir, f"{server_name}*_{date}.log")
+    log_files = glob.glob(pattern)
     try:
-        if os.path.exists(log_file):
-            with open(log_file, 'r') as f:
+        if log_files:
+            with open(log_files[0], 'r') as f:
                 logs = f.readlines()
             return jsonify({"logs": logs})
         else:
@@ -68,12 +68,12 @@ def download_log(server_name):
         
     date = request.args.get('date', datetime.now().strftime('%Y-%m-%d'))
     year, month = date.split('-')[:2]
-    
-    log_file = os.path.join(LOG_DIR, year, month, f"{server_name}_{date}.log")
-    
-    if os.path.exists(log_file):
-        return send_file(log_file, as_attachment=True, 
-                        download_name=f"{server_name}_{date}.log")
+    log_dir = os.path.join(LOG_DIR, year, month)
+    pattern = os.path.join(log_dir, f"{server_name}*_{date}.log")
+    log_files = glob.glob(pattern)
+    if log_files:
+        return send_file(log_files[0], as_attachment=True, 
+                        download_name=os.path.basename(log_files[0]))
     else:
         return jsonify({"error": "Log file not found"}), 404
 
@@ -90,12 +90,14 @@ def compare_logs():
         return jsonify({"error": "Server not found"}), 404
     
     year, month = date.split('-')[:2]
-    log1 = os.path.join(LOG_DIR, year, month, f"{server1}_{date}.log")
-    log2 = os.path.join(LOG_DIR, year, month, f"{server2}_{date}.log")
-    
+    log_dir = os.path.join(LOG_DIR, year, month)
+    pattern1 = os.path.join(log_dir, f"{server1}*_{date}.log")
+    pattern2 = os.path.join(log_dir, f"{server2}*_{date}.log")
+    log_files1 = glob.glob(pattern1)
+    log_files2 = glob.glob(pattern2)
     try:
-        if os.path.exists(log1) and os.path.exists(log2):
-            with open(log1, 'r') as f1, open(log2, 'r') as f2:
+        if log_files1 and log_files2:
+            with open(log_files1[0], 'r') as f1, open(log_files2[0], 'r') as f2:
                 diff = []
                 for line1, line2 in zip(f1, f2):
                     if line1 != line2:
