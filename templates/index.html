@@ -234,8 +234,13 @@
 
         // 로그 하이라이트 함수
         function highlightLog(log) {
-            // "==== 1. 네트워크 정보 ====", "==== 2. ... ====", 등 항목 제목 하이라이트
-            return log.replace(/(==== \d+\. [^=]+ ====)/g, '<span class="log-section">$1</span>');
+            // 타임스탬프 뒤에 오는 항목 제목까지 하이라이트
+            return log.replace(/(\[.*?\]\s*)?(==== \d+\. [^=]+ ====)/g, function(match, ts, section) {
+                if (section) {
+                    return (ts ? ts : '') + '<span class="log-section">' + section + '</span>';
+                }
+                return match;
+            });
         }
 
         // 초기 로드
