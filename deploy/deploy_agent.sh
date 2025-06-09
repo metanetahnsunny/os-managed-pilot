@@ -39,14 +39,16 @@ deploy_agent() {
         
         # 로그 디렉토리 설정
         LOG_DIR="/var/log/osmanaged/\$(date +%Y)/\$(date +%m)"
+        echo "Creating log directory: \$LOG_DIR"
         mkdir -p \$LOG_DIR
         
         # 로그 파일 설정
         LOG_FILE="\$LOG_DIR/\$(hostname)_\$(date +%Y-%m-%d).log"
+        echo "Log file path: \$LOG_FILE"
         
         # 로그 함수
         log() {
-            echo "[\$(date '+%Y-%m-%d %H:%M:%S')] \$1" >> \$LOG_FILE
+            echo "[\$(date '+%Y-%m-%d %H:%M:%S')] \$1" | tee -a \$LOG_FILE
         }
         
         # 1. 네트워크 정보 수집
@@ -170,6 +172,10 @@ deploy_agent() {
         # 메인 실행
         main() {
             log "Starting collection for \$(hostname)"
+            log "Current working directory: \$(pwd)"
+            log "User: \$(whoami)"
+            log "Log directory exists: \$(test -d \$LOG_DIR && echo 'yes' || echo 'no')"
+            log "Log file exists: \$(test -f \$LOG_FILE && echo 'yes' || echo 'no')"
             collect_network_info
             collect_user_info
             collect_os_info
@@ -185,6 +191,7 @@ deploy_agent() {
             collect_port_status
             collect_system_logs
             log "Collection completed"
+            log "Final log file size: \$(ls -l \$LOG_FILE 2>/dev/null || echo 'File not found')"
         }
         
         # 스크립트 실행
