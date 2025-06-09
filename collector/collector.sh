@@ -1,11 +1,16 @@
 #!/bin/bash
 
+# 서버명 직접 지정 (이 파일을 각 서버에 맞게 수정)
+SERVER_NAME="$(hostname)"
+# 필요시 아래처럼 직접 지정 가능 (예: bm1 서버에서는 SERVER_NAME="bm1")
+# SERVER_NAME="bm1"
+
 # 로그 디렉토리 설정
 LOG_DIR="/var/log/osmanaged/$(date +%Y)/$(date +%m)"
 mkdir -p $LOG_DIR
 
 # 로그 파일 설정
-LOG_FILE="$LOG_DIR/$(hostname)_$(date +%Y-%m-%d).log"
+LOG_FILE="$LOG_DIR/${SERVER_NAME}_$(date +%Y-%m-%d).log"
 
 # 로그 함수
 log() {
