@@ -11,7 +11,7 @@ mkdir -p $LOG_DIR
 # 로그 파일 설정
 LOG_FILE="$LOG_DIR/${SERVER_NAME}_$(date +%Y-%m-%d).log"
 
-# 로그 함수
+# 로그 함수 (타임스탬프 없이)
 log() {
     echo "$1" >> $LOG_FILE
 }
@@ -31,12 +31,13 @@ collect_network_info() {
 # 2. USER 정보
 collect_user_info() {
     log "=== User Information ==="
-    getent passwd | awk -F: '$3 >= 1000 && $1 != "nobody" {print $1}' | while read username; do
+    getent passwd | awk -F: '$3 >= 1000 && $1 != "nobody"' | cut -d: -f1 | while read username; do
         expire=$(chage -l "$username" 2>/dev/null | grep "Password expires" | awk -F: '{print $2}' | xargs)
         if [ -n "$expire" ]; then
             log "$username: Password expires : $expire"
         fi
-    done
+    done | head -n 5
+    log "... (최대 5명만 표시)"
     log ""
 }
 
@@ -53,9 +54,10 @@ collect_resource_usage() {
     log "=== Resource Usage ==="
     mem=$(free -h | awk '/Mem:/ {print $3 "/" $2}')
     log "Memory Usage: $mem"
-    df -h --output=target,pcent | grep -v 'Mounted' | while read mp pct; do
+    df -h --output=target,pcent | grep -v 'Mounted' | head -n 5 | while read mp pct; do
         log "Disk $mp: $pct"
     done
+    log "... (최대 5개 마운트만 표시)"
     log ""
 }
 
@@ -72,19 +74,21 @@ collect_firewall_status() {
 # 6. Proxy 설정
 collect_proxy_settings() {
     log "=== Proxy Settings ==="
-    env | grep -i proxy | while read line; do log "$line"; done
+    env | grep -i proxy | head -n 5 | while read line; do log "$line"; done
     if [ -f /etc/environment ]; then
-        grep -i proxy /etc/environment | while read line; do log "$line"; done
+        grep -i proxy /etc/environment | head -n 5 | while read line; do log "$line"; done
     fi
+    log "... (최대 5줄만 표시)"
     log ""
 }
 
 # 7. Crontab 설정
 collect_crontab() {
     log "=== Crontab Settings ==="
-    getent passwd | awk -F: '$3 >= 1000 && $1 != "nobody" {print $1}' | while read user; do
-        crontab -u $user -l 2>/dev/null | grep -v "no crontab" | while read line; do log "$user: $line"; done
+    getent passwd | awk -F: '$3 >= 1000 && $1 != "nobody"' | cut -d: -f1 | while read user; do
+        crontab -u $user -l 2>/dev/null | grep -v "no crontab" | head -n 5 | while read line; do log "$user: $line"; done
     done
+    log "... (최대 5줄만 표시)"
     log ""
 }
 
@@ -95,8 +99,9 @@ collect_ntp() {
         log "$(timedatectl | grep 'NTP synchronized')"
     fi
     if [ -f /etc/ntp.conf ]; then
-        grep -v '^#' /etc/ntp.conf | grep -v '^$' | while read line; do log "$line"; done
+        grep -v '^#' /etc/ntp.conf | grep -v '^$' | head -n 5 | while read line; do log "$line"; done
     fi
+    log "... (최대 5줄만 표시)"
     log ""
 }
 
@@ -108,6 +113,7 @@ collect_package_updates() {
     elif command -v yum &> /dev/null; then
         yum history 2>/dev/null | head -n 5 | while read line; do log "$line"; done
     fi
+    log "... (최대 5줄만 표시)"
     log ""
 }
 
@@ -119,7 +125,7 @@ collect_installed_packages() {
     elif command -v rpm &> /dev/null; then
         rpm -qa | head -n 5 | while read line; do log "$line"; done
     fi
-    log "... (생략)"
+    log "... (최대 5개만 표시)"
     log ""
 }
 
@@ -128,7 +134,7 @@ collect_access_logs() {
     log "=== Yesterday's Access Logs ==="
     yesterday=$(date -d "yesterday" +%Y-%m-%d)
     grep "$yesterday" /var/log/auth.log 2>/dev/null | head -n 5 | while read line; do log "$line"; done
-    log "... (생략)"
+    log "... (최대 5줄만 표시)"
     log ""
 }
 
@@ -156,7 +162,7 @@ collect_port_status() {
 collect_system_logs() {
     log "=== System Log (Error/Fail/Warn/Fault) ==="
     grep -i "error\|fail\|warn\|fault" /var/log/syslog 2>/dev/null | head -n 5 | while read line; do log "$line"; done
-    log "... (생략)"
+    log "... (최대 5줄만 표시)"
     log ""
 }
 
