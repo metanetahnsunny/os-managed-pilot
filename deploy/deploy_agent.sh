@@ -30,10 +30,11 @@ deploy_agent() {
     # sshpass를 사용하여 SSH로 서버에 접속하여 에이전트 설치
     sshpass -p "$SSH_PASS" ssh -o StrictHostKeyChecking=no $SSH_USER@$server << 'EOF'
         # 로그 디렉토리 생성
-        mkdir -p /var/log/osmanaged
+        sudo mkdir -p /var/log/osmanaged
+        sudo chown -R $USER:$USER /var/log/osmanaged
         
         # collector 스크립트 복사
-        cat > /usr/local/bin/collector.sh << 'EOSCRIPT'
+        sudo tee /usr/local/bin/collector.sh > /dev/null << 'EOSCRIPT'
         #!/bin/bash
         
         # 로그 디렉토리 설정
@@ -191,7 +192,7 @@ deploy_agent() {
 EOSCRIPT
         
         # 실행 권한 부여
-        chmod +x /usr/local/bin/collector.sh
+        sudo chmod +x /usr/local/bin/collector.sh
         
         # crontab에 등록 (매일 자정에 실행)
         (crontab -l 2>/dev/null; echo "0 0 * * * /usr/local/bin/collector.sh") | crontab -
