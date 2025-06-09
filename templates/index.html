@@ -30,6 +30,16 @@
         .status-inactive {
             background-color: #dc3545;
         }
+        /* 로그 항목 제목 하이라이트 */
+        .log-section {
+            color: #1976d2;
+            font-weight: bold;
+            background: #e3f2fd;
+            padding: 2px 8px;
+            border-radius: 4px;
+            display: inline-block;
+            margin: 2px 0;
+        }
     </style>
 </head>
 <body>
@@ -178,7 +188,7 @@
                 .then(response => response.json())
                 .then(data => {
                     const logViewer = document.getElementById('logViewer');
-                    logViewer.innerHTML = data.logs.join('<br>');
+                    logViewer.innerHTML = highlightLog(data.logs.join('<br>'));
                 });
         }
 
@@ -220,6 +230,12 @@
                     viewer1.innerHTML = data.diff.map(d => d.server1).join('<br>');
                     viewer2.innerHTML = data.diff.map(d => d.server2).join('<br>');
                 });
+        }
+
+        // 로그 하이라이트 함수
+        function highlightLog(log) {
+            // "==== 1. 네트워크 정보 ====", "==== 2. ... ====", 등 항목 제목 하이라이트
+            return log.replace(/(==== \d+\. [^=]+ ====)/g, '<span class="log-section">$1</span>');
         }
 
         // 초기 로드
