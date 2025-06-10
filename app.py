@@ -9,7 +9,7 @@ app.config['SECRET_KEY'] = os.urandom(24)
 # 서버 설정
 SERVERS = {
     "vm1": {"ip": "192.168.198.131", "type": "VM"},
-    "bm1": {"ip": "192.168.198.132", "type": "BM"}
+    "bm1": {"ip": "192.168.198.133", "type": "BM"}
 }
 
 # 로그 디렉토리 설정
